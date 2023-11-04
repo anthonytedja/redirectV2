@@ -1,0 +1,3 @@
+networks:
+  redis-net
+  cassandra-net
