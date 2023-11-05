@@ -1,0 +1,34 @@
+#!/bin/bash
+USAGE="Usage: $0 MASTER_IP NEW_NODE_IP"
+
+if [ "$#" -ne "2" ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+MASTER="$1"
+NEW_NODE_IP="$2"
+NODE_NAME="cassandra-node-new"
+VOLUME_NAME="cassandra-volume-new"
+
+# Check if the Docker network exists
+if ! docker network inspect cassandra-net >/dev/null 2>&1; then
+    echo "Docker network cassandra-net does not exist. Please create it before running this script."
+    exit 1
+fi
+
+# Run the new node
+COMMAND="docker run --name $NODE_NAME --network=cassandra-net -d -e CASSANDRA_BROADCAST_ADDRESS=$NEW_NODE_IP -p 7000:7000 -p 9042:9042 -e CASSANDRA_SEEDS=$MASTER -v $VOLUME_NAME:/var/lib/cassandra/data cassandra"
+ssh student@$NEW_NODE_IP "docker container stop $NODE_NAME; docker container rm $NODE_NAME; docker volume rm $VOLUME_NAME; docker volume create $VOLUME_NAME; $COMMAND;"
+
+# Wait for the new node to start
+while true;
+do
+    sleep 30
+    STATUS=$(ssh student@$NEW_NODE_IP "docker exec -it $NODE_NAME nodetool status" | grep -e $NEW_NODE_IP)
+    STATUSUN=$(echo $STATUS | grep -e "UN")
+    echo $STATUS
+    [[ ! -z "$STATUSUN" ]] && break;
+done;
+
+echo "New node added to the cluster"

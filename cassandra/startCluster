@@ -1,0 +1,60 @@
+#!/bin/bash
+USAGE="Usage: $0 MASTER_IP IP1 IP2 IP3 ..."
+
+if [ "$#" -lt "3" ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+MASTER="$1"
+shift
+REPLICATION_FACTOR=2
+COUNTER=1
+
+# Check if the Docker network exists
+if ! docker network inspect cassandra-net >/dev/null 2>&1; then
+    echo "Docker network cassandra-net does not exist. Please create it before running this script."
+    exit 1
+fi
+
+while (( "$#" )); do
+    NODE_NAME="cassandra-node$COUNTER"
+    VOLUME_NAME="cassandra-volume$COUNTER"
+    if [ "$1" = "$MASTER" ]; 
+    then
+        COMMAND="docker run --name $NODE_NAME --network=cassandra-net -d -e CASSANDRA_BROADCAST_ADDRESS=$1 -p 7000:7000 -p 9042:9042 -v $VOLUME_NAME:/var/lib/cassandra/data cassandra"
+    else
+        COMMAND="docker run --name $NODE_NAME --network=cassandra-net -d -e CASSANDRA_BROADCAST_ADDRESS=$1 -p 7000:7000 -p 9042:9042 -e CASSANDRA_SEEDS=$MASTER -v $VOLUME_NAME:/var/lib/cassandra/data cassandra"
+    fi
+    ssh student@$1 "docker container stop $NODE_NAME; docker container rm $NODE_NAME; docker volume rm $VOLUME_NAME; docker volume create $VOLUME_NAME; $COMMAND;"
+    
+    while true;
+    do
+        sleep 30
+        STATUS=$(ssh student@$1 "docker exec -it $NODE_NAME nodetool status" | grep -e $1)
+        STATUSUN=$(echo $STATUS | grep -e "UN")
+        echo $STATUS
+        [[ ! -z "$STATUSUN" ]] && break;
+    done;
+
+    COUNTER=$((COUNTER+1))
+    shift
+done
+
+KEYSPACE_EXISTS=$(ssh student@$MASTER "docker exec -it cassandra-node1 cqlsh -e \"DESCRIBE KEYSPACES;\"" | grep -e "urls")
+if [ -z "$KEYSPACE_EXISTS" ]; then
+    ssh student@$MASTER "docker exec -it cassandra-node1 cqlsh -e \"CREATE KEYSPACE urls WITH replication = {'class':'SimpleStrategy', 'replication_factor' : 2}; CONSISTENCY QUORUM; USE urls; CREATE TABLE IF NOT EXISTS urls (short_code text PRIMARY KEY, url_original text);\""
+fi
+
+ssh student@$MASTER "docker exec -it cassandra-node1 cqlsh"
+
+# Cleanup Docker network
+docker network rm cassandra-net
+
+# Example commands
+
+# Insert some data into the table
+# USE urls; INSERT INTO urls (short_code, url_original) VALUES ('abc', 'https://www.google.com');
+
+# Select the data from the table where the short_code is 'abc'
+# USE urls; SELECT * FROM urls WHERE short_code = 'abc' ALLOW FILTERING;

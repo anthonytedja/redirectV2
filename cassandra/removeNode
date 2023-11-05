@@ -1,0 +1,24 @@
+#!/bin/bash
+USAGE="Usage: $0 NODE_IP"
+
+if [ "$#" -ne "1" ]; then
+    echo "$USAGE"
+    exit 1
+fi
+
+NODE_IP="$1"
+NODE_NAME="cassandra-node"
+
+# Check if the Docker network exists
+if ! docker network inspect cassandra-net >/dev/null 2>&1; then
+    echo "Docker network cassandra-net does not exist. Please create it before running this script."
+    exit 1
+fi
+
+# Decommission the node
+ssh student@$NODE_IP "docker exec -it $NODE_NAME nodetool decommission"
+
+# Stop and remove the node
+ssh student@$NODE_IP "docker container stop $NODE_NAME; docker container rm $NODE_NAME;"
+
+echo "Node removed from the cluster"
