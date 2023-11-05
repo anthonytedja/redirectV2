@@ -1,8 +1,8 @@
 FROM eclipse-temurin:20
 
-ADD *.java /server/
-ADD files /server/files
-ADD lib /server/lib
+ADD *.java /
+ADD files files
+ADD lib lib
 
 RUN javac -cp "lib/*:." *.java
 
