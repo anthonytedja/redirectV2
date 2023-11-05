@@ -1,10 +1,8 @@
 FROM eclipse-temurin:20
 
-WORKDIR /server
-
-ADD ./server/*.java /server/
-ADD ./server/files /server/files
-ADD ./server/lib /server/lib
+ADD *.java /server/
+ADD files /server/files
+ADD lib /server/lib
 
 RUN javac -cp "lib/*:." *.java
 
