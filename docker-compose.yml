@@ -1,7 +1,8 @@
+version: "3"
 services:
   redis:
-    build:
-      context: redis
+    image: 10.128.1.28:5000/redis:latest
+    build: redis
     ports:
       - "6379:6379"
     deploy:
@@ -9,13 +10,13 @@ services:
       restart_policy:
         condition: on-failure
     volumes:
-      - "/home/student/data:/data"
+      - "/home/student/redis-data:/data"
     networks:
       - redis-net
 
   url-shortner:
-    build:
-      context: shortner
+    image: 10.128.1.28:5000/shortner:latest
+    build: ./shortner
     deploy:
       replicas: 4
       restart_policy:
@@ -24,5 +25,6 @@ services:
       - "8000:8000"
     networks:
       - redis-net
+
 networks:
-  redis-net
+  redis-net:
