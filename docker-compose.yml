@@ -1,7 +1,7 @@
-version: "3"
 services:
   redis:
-    image: redis:7.2.2-bookworm
+    build:
+      context: redis
     ports:
       - "6379:6379"
     deploy:
@@ -12,13 +12,17 @@ services:
       - "/home/student/data:/data"
     networks:
       - redis-net
+
   url-shortner:
-    image: url-server
+    build:
+      context: shortner
     deploy:
       replicas: 4
+      restart_policy:
+        condition: on-failure
     ports:
       - "8000:8000"
     networks:
       - redis-net
 networks:
-  redis-net:
+  redis-net
