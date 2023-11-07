@@ -1,2 +1,4 @@
-./startCluster 10.11.12.5 10.11.12.8 10.11.12.24
-./stopCluster 10.11.12.5 10.11.12.8 10.11.12.24
+./cassandra/startCluster 10.128.1.28 10.128.2.28 10.128.3.28
+./cassandra/stopCluster 10.128.1.28 10.128.2.28 10.128.3.28
+./cassandra/addNode 10.128.1.28 10.128.4.28
+./cassandra/removeNode 10.128.4.28

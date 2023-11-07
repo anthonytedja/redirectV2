@@ -1,25 +1,19 @@
 #!/bin/bash
-USAGE="Usage: $0 IP1 IP2 IP3 ..."
+USAGE="Usage: $0 MASTER_IP IP2 IP3 ..."
 
-if [ "$#" -lt "1" ]; then
-    echo "$USAGE"
-    exit 1
+if [ "$#" == "0" ]; then
+	echo "$USAGE"
+	exit 1
 fi
 
-COUNTER=1
+MASTER="$1"
+NODE_NAME="cassandra-node"
+
+docker container stop $NODE_NAME
+docker container rm $NODE_NAME
+shift
 
 while (( "$#" )); do
-    NODE_NAME="cassandra-node$COUNTER"
-    VOLUME_NAME="cassandra-volume$COUNTER"
-    
-    # Stop and remove the node
-    ssh student@$1 "docker container stop $NODE_NAME; docker container rm $NODE_NAME; docker volume rm $VOLUME_NAME;"
-    
-    COUNTER=$((COUNTER+1))
-    shift
+	ssh student@$1 "docker container stop $NODE_NAME; docker container rm $NODE_NAME"
+	shift
 done
-
-# Cleanup Docker network
-docker network rm cassandra-net
-
-echo "Cluster stopped"
