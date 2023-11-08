@@ -7,7 +7,13 @@ push: build
 	docker-compose push
 
 deploy: push
-	docker stack deploy -c docker-compose.yml csc409a2
+	./swarm-setup.sh
 
 kill:
-	docker stack rm csc409a2
+	./swarm-teardown.sh
+
+node-status:
+	docker node ls
+
+stack-status:
+	docker stack ps csc409a2
