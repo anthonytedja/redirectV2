@@ -4,3 +4,5 @@ for worker in '10.128.2.28' '10.128.3.28' '10.128.4.28'; do
 done
 docker stack rm csc409a2
 docker swarm leave --force
+
+docker ps -f "ancestor=registry" -aq | xargs docker container stop

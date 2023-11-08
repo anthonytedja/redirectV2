@@ -1,4 +1,7 @@
-all: build push deploy
+all: setup build push deploy
+
+setup:
+	./startRegistry.sh
 
 build:
 	docker-compose build
