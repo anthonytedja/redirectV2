@@ -157,6 +157,7 @@ class URLShortnerWorker implements Runnable {
 			out.println("Date: " + new Date());
 			out.println("Content-type: " + contentMimeType);
 			out.println("Content-length: " + fileLength);
+			out.println("Access-Control-Allow-Origin: *");
 			out.println();
 			out.flush();
 
@@ -210,6 +211,7 @@ class URLShortnerWorker implements Runnable {
 				out.println("Date: " + new Date());
 				out.println("Content-type: " + contentMimeType);
 				out.println("Content-length: " + fileLength);
+				out.println("Access-Control-Allow-Origin: *");
 				out.println();
 				out.flush();
 
@@ -226,6 +228,7 @@ class URLShortnerWorker implements Runnable {
 				out.println("Date: " + new Date());
 				out.println("Content-type: " + content);
 				out.println("Content-length: " + fileLength);
+				out.println("Access-Control-Allow-Origin: *");
 				out.println();
 				out.flush();
 
@@ -271,11 +274,12 @@ class URLShortnerWorker implements Runnable {
 			// read content to return to client
 			byte[] fileData = readFileData(file, fileLength);
 
-			out.println("HTTP/1.1 400 Bad Request");
+			out.println("HTTP/1.1 200 OK");
 			out.println("Server: Java HTTP Server/Shortner : 1.0");
 			out.println("Date: " + new Date());
 			out.println("Content-type: " + contentMimeType);
 			out.println("Content-length: " + fileLength);
+			out.println("Access-Control-Allow-Origin: *");
 			out.println();
 			out.flush();
 
@@ -311,11 +315,12 @@ class URLShortnerWorker implements Runnable {
 			// read content to return to client
 			byte[] fileData = readFileData(file, fileLength);
 
-			out.println("HTTP/1.1 200 OK");
+			out.println("HTTP/1.1 400 Bad Request");
 			out.println("Server: Java HTTP Server/Shortner : 1.0");
 			out.println("Date: " + new Date());
 			out.println("Content-type: " + contentMimeType);
 			out.println("Content-length: " + fileLength);
+			out.println("Access-Control-Allow-Origin: *");
 			out.println();
 			out.flush();
 

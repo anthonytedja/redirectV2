@@ -2,7 +2,7 @@
 	<body>
 		<h1>URL Shortner</h1>
 		<h2>PUT</h2>
-		<form method="PUT">
+		<form method="PUT" onsubmit="return submitPut(event)">
 			<label for="short">Short URL:</label><br>
 			<input type="text" id="short" name="short"><br>
 			<label for="long">Long URL:</label><br>
@@ -10,10 +10,29 @@
 			<input type="submit" value="Submit">
 		</form> 
 		<h2>GET</h2>
-		<form method="GET">
+		<form method="GET" onsubmit="return submitGet(event)">
 			<label for="short2">Short URL:</label><br>
 			<input type="text" id="short2" name="short"><br>
 			<input type="submit" value="Submit">
 		</form> 
 	</body>
+	<script type="text/javascript">
+		function submitGet(e) {
+			e.preventDefault();
+			const short =  document.getElementById("short2").value;
+			window.location.href = `http://localhost:8000/${short}`;
+			return false;
+		}
+
+		function submitPut(e) {
+			e.preventDefault();
+			const short =  document.getElementById("short").value;
+			const long =  document.getElementById("long").value;
+			fetch(`http://localhost:8000/?short=${short}&long=${long}`, {
+				method: "PUT"
+			}).then(res => res.text())
+			.then(text => document.body.innerHTML = text);
+			return false;
+		}
+	 </script>
 </html>
