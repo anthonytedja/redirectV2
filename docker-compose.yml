@@ -1,7 +1,7 @@
 version: "3"
 services:
-  redis-master:
-    hostname: redis-master
+  read-cache-master:
+    hostname: read-cache-master
     image: 10.128.1.28:5000/redis:latest
     build: redis
     ports: 
@@ -16,7 +16,7 @@ services:
     volumes:
       - "/home/student/redis-data:/data"
     networks:
-      - redis-net
+      - read-cache-net
       # - webnet
     # healthcheck:
     #   test: ["CMD", "redis-cli", "ping"]
@@ -25,8 +25,8 @@ services:
     #   timeout: 10s
     #   retries: 3
   
-  redis-slave:
-    hostname: redis-slave
+  read-cache-slave:
+    hostname: read-cache-slave
     image: 10.128.1.28:5000/redis:latest
     build: redis
     ports: 
@@ -39,7 +39,7 @@ services:
         constraints:
           - "node.role != manager"
     networks:
-      - redis-net
+      - read-cache-net
       # - webnet
     # healthcheck:
     #   test: ["CMD", "redis-cli", "ping"]
@@ -47,13 +47,43 @@ services:
     #   interval: 30s
     #   timeout: 10s
     #   retries: 3
-    command: redis-server --slaveof redis-master 6379
+    command: redis-server --slaveof read-cache-master 6379
     depends_on:
-      - redis-master
+      - read-cache-master
+
+  write-queue:
+    hostname: write-queue
+    image: 10.128.1.28:5000/redis:latest
+    build: redis
+    ports:
+      - "6390:6379"
+    deploy:
+      replicas: 4
+      restart_policy:
+        condition: on-failure
+    networks:
+      - write-queue-net
+
+  write-queue-flush:
+    hostname: write-queue-flush
+    image: 10.128.1.28:5000/write-queue-flush:latest
+    build: 
+      context: javasrc
+      dockerfile: write-queue-flush/Dockerfile
+    deploy:
+      replicas: 4
+      restart_policy:
+          condition: on-failure
+    ports:
+      - "8100:8000"
+    networks:
+      - write-queue-net
 
   url-shortner:
     image: 10.128.1.28:5000/shortner:latest
-    build: ./shortner
+    build: 
+      context: javasrc
+      dockerfile: shortner/Dockerfile
     deploy:
       replicas: 4
       restart_policy:
@@ -63,7 +93,8 @@ services:
     volumes:
       - "/home/student/server-logs:/app/out"
     networks:
-      - redis-net
+      - read-cache-net
+      - write-queue-net
       # - webnet
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
@@ -85,5 +116,6 @@ services:
   #     - webnet
 
 networks:
-  redis-net:
+  read-cache-net:
+  write-queue-net:
   # webnet:
