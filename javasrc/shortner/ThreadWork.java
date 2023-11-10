@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.LinkedList;
 import java.util.HashMap;
 import java.net.Socket;
+import common.CassandraDao;
+import common.RedisDao;
 
 /**
  * Collection of data necessary for concurrent thread work.

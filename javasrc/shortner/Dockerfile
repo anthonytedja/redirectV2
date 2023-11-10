@@ -2,9 +2,12 @@ FROM eclipse-temurin:20
 
 WORKDIR /app
 
-ADD *.java /app/
-ADD files /app/files
+# written with build context = javasrc
+ADD shortner/*.java /app/
+ADD shortner/files /app/files
 ADD lib /app/lib
+ADD common /app/common
+
 RUN mkdir -p out
 
 RUN javac -cp "lib/*:." *.java

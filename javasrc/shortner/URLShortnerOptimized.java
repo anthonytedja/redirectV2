@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Date;
+import common.CassandraDao;
+import common.RedisDao;
 
 public class URLShortnerOptimized {
 
@@ -14,6 +16,7 @@ public class URLShortnerOptimized {
 	static String REDIS_HOSTNAME;
 	static int REDIS_PORT;
 	static String CASSANDRA_HOSTNAME;
+	static int CASSANDRA_PORT;
 
 	public static void main(String[] args) {
 		try {
@@ -23,9 +26,10 @@ public class URLShortnerOptimized {
 			REDIS_HOSTNAME = args[3];
 			REDIS_PORT = Integer.parseInt(args[4]);
 			CASSANDRA_HOSTNAME = args[5];
+			CASSANDRA_PORT = Integer.parseInt(args[6]);
 
 			RedisDao redisDao = new RedisDao(REDIS_HOSTNAME, REDIS_PORT);
-			CassandraDao cassDao = new CassandraDao(CASSANDRA_HOSTNAME);
+			CassandraDao cassDao = new CassandraDao(CASSANDRA_HOSTNAME, CASSANDRA_PORT);
 
 			ThreadWork work = new ThreadWork(redisDao, cassDao);
 

@@ -1,4 +1,6 @@
 // package server;
+import common.RedisDao;
+import common.KeyValuePair;
 
 public class Cache {
 	private RedisDao dao;
@@ -12,6 +14,6 @@ public class Cache {
 	}
 
 	public void set(String key, String value) {
-		this.dao.set(key, value);
+		this.dao.set(new KeyValuePair(key, value));
 	}
 }
