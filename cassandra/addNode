@@ -1,29 +1,30 @@
 #!/bin/bash
-USAGE="Usage: $0 MASTER_IP NEW_NODE_IP"
-
-if [ "$#" != "2" ]; then
+USAGE="Usage: $0 NEW_NODE_IP"
+if [ "$#" != "1" ]; then
     echo "$USAGE"
     exit 1
 fi
 
-MASTER="$1"
-NEW_NODE="$2"
+NEW_NODE="$1"
+MASTER=$(head -n 1 ./cassandra/hosts)
 NODE_NAME="cassandra-node"
 VOLUME_PATH="/home/student/cassandra-data"
+#HEALTH_CMD="cqlsh -e \"DESCRIBE KEYSPACES;\""
+CASSANDRA_PORT=9042
+CASSANDRA_NET=cassandra-net
 
-CASSANDRA_PORT=4321
-
-COMMAND="docker run --name $NODE_NAME -d -e CASSANDRA_BROADCAST_ADDRESS=$NEW_NODE -p 7000:7000 -p $CASSANDRA_PORT:9042 -e CASSANDRA_SEEDS=$MASTER -v $VOLUME_PATH:/var/lib/cassandra cassandra"
+#COMMAND="docker run --name $NODE_NAME -d -e CASSANDRA_BROADCAST_ADDRESS=$NEW_NODE -p 7000:7000 -p $CASSANDRA_PORT:9042 --network=$CASSANDRA_NET -e CASSANDRA_SEEDS=$MASTER -v $VOLUME_PATH:/var/lib/cassandra --health-cmd=$HEALTH_CMD --health-interval=30s --health-timeout=30s --health-retries=3 cassandra"
+COMMAND="docker run --name $NODE_NAME -d -e CASSANDRA_BROADCAST_ADDRESS=$NEW_NODE -p 7000:7000 -p $CASSANDRA_PORT:9042 --network=$CASSANDRA_NET -e CASSANDRA_SEEDS=$MASTER -v $VOLUME_PATH:/var/lib/cassandra cassandra"
 ssh student@$NEW_NODE "docker container stop $NODE_NAME; docker container rm $NODE_NAME; if [ ! -d $VOLUME_PATH ]; then mkdir -p $VOLUME_PATH; fi; $COMMAND;"
 
-while true;
-do
-    sleep 5
-    STATUS=$(docker exec -it $NODE_NAME nodetool status | grep -e $NEW_NODE)
-    STATUSUN=$(echo $STATUS | grep -e "UN")
-    echo $STATUS
-    [[ ! -z "$STATUSUN" ]] && break;
-done;
+# while true;
+# do
+#     sleep 5
+#     STATUS=$(docker exec -it $NODE_NAME nodetool status | grep -e $NEW_NODE)
+#     STATUSUN=$(echo $STATUS | grep -e "UN")
+#     echo $STATUS
+#     [[ ! -z "$STATUSUN" ]] && break;
+# done;
 
 echo "Node added to the cluster."
 docker exec -it cassandra-node bash -c "nodetool status"

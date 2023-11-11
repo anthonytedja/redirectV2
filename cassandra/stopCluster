@@ -1,19 +1,9 @@
 #!/bin/bash
-USAGE="Usage: $0 MASTER_IP IP2 IP3 ..."
+# Hosts are retrieved from the "hosts" file. The first host listed is the master.
 
-if [ "$#" == "0" ]; then
-	echo "$USAGE"
-	exit 1
-fi
-
-MASTER="$1"
+MASTER=$(head -n 1 ./cassandra/hosts)
 NODE_NAME="cassandra-node"
 
-docker container stop $NODE_NAME
-docker container rm $NODE_NAME
-shift
-
-while (( "$#" )); do
-	ssh student@$1 "docker container stop $NODE_NAME; docker container rm $NODE_NAME"
-	shift
+for host in $(cat ./cassandra/hosts); do
+	ssh student@$host "docker container stop $NODE_NAME; docker container rm $NODE_NAME"
 done
