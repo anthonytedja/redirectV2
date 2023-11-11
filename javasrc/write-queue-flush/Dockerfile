@@ -11,4 +11,10 @@ RUN mkdir -p out
 
 RUN javac -cp "lib/*:." *.java
 
-CMD java  -cp "liv/*:." WriteQueueFlush > out/server.log 2> out/error.log
+ENV redis_read_master_hostname=read-cache-master
+ENV redis_read_slave_hostname=read-cache-slave
+ENV redis_port=6379
+ENV cassandra_hostname=cassandra
+ENV cassandra_port=9042
+
+CMD java  -cp "liv/*:." WriteQueueFlush $redis_read_master_hostname $redis_read_slave_hostname $redis_port $cassandra_hostname $cassandra_port > out/server.log 2> out/error.log

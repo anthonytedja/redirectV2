@@ -13,7 +13,8 @@ public class URLShortnerOptimized {
 	static boolean IS_VERBOSE; // toggle log statements
 	static int PORT;
 	static int NUM_THREADS; // 4
-	static String REDIS_HOSTNAME;
+	static String REDIS_READ_MASTER_HOSTNAME;
+	static String REDIS_READ_SLAVE_HOSTNAME;
 	static int REDIS_PORT;
 	static String CASSANDRA_HOSTNAME;
 	static int CASSANDRA_PORT;
@@ -23,12 +24,13 @@ public class URLShortnerOptimized {
 			IS_VERBOSE = Boolean.parseBoolean(args[0]);
 			PORT = Integer.parseInt(args[1]);
 			NUM_THREADS = Integer.parseInt(args[2]);
-			REDIS_HOSTNAME = args[3];
-			REDIS_PORT = Integer.parseInt(args[4]);
-			CASSANDRA_HOSTNAME = args[5];
-			CASSANDRA_PORT = Integer.parseInt(args[6]);
+			REDIS_READ_MASTER_HOSTNAME = args[3];
+			REDIS_READ_SLAVE_HOSTNAME = args[4];
+			REDIS_PORT = Integer.parseInt(args[5]);
+			CASSANDRA_HOSTNAME = args[6];
+			CASSANDRA_PORT = Integer.parseInt(args[7]);
 
-			RedisDao redisDao = new RedisDao(REDIS_HOSTNAME, REDIS_PORT);
+			RedisDao redisDao = new RedisDao(REDIS_READ_MASTER_HOSTNAME, REDIS_READ_SLAVE_HOSTNAME, REDIS_PORT);
 			CassandraDao cassDao = new CassandraDao(CASSANDRA_HOSTNAME, CASSANDRA_PORT);
 
 			ThreadWork work = new ThreadWork(redisDao, cassDao);
