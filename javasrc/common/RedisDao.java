@@ -6,18 +6,24 @@ import common.KeyValuePair;
 import java.util.List;
 
 public class RedisDao {
-	private String host;
+	private String masterHost;
+	private String slaveHost;
 	private int port;
 	private JedisPooled jedis;
 
-	public RedisDao(String host, int port) throws JedisConnectionException {
-		this.host = host;
+	public RedisDao(String masterHost, String slaveHost, int port) throws JedisConnectionException {
+		this.masterHost = masterHost;
+		this.slaveHost = slaveHost;
 		this.port = port;
 
+		connect();
+	}
+
+	public void connect() {
 		try {
-			this.jedis = new JedisPooled("redis-master", port);
+			this.jedis = new JedisPooled(this.masterHost, port);
 		} catch (JedisConnectionException e) {
-			this.jedis = new JedisPooled("redis-slave", port);
+			this.jedis = new JedisPooled(this.slaveHost, port);
 		}
 	}
 
