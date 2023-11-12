@@ -1,0 +1,17 @@
+#!/bin/bash
+method=$1
+
+if [ -z "$method" ] || [ "$method" != "GET" ] && [ "$method" != "PUT" ]; then
+    echo "Usage: runPlot [GET|PUT]"
+    exit 1
+fi
+
+cat ../$method* > "$method.ALL.out"
+
+if [ "$method" == "GET" ]; then
+    method='GET' gnuplot frequency.gp
+fi
+
+if [ "$method" == "PUT" ]; then
+    method='PUT' gnuplot frequency.gp
+fi
