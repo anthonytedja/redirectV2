@@ -6,3 +6,5 @@ docker stack rm csc409a2
 docker swarm leave --force
 
 docker ps -f "ancestor=registry" -aq | xargs docker container stop
+
+rm joinToken

@@ -1,0 +1,4 @@
+#!/bin/bash
+# Usage: removeNodeFromSwarm <host to remove>
+
+ssh $1 "docker swarm leave --force"

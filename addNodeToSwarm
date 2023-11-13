@@ -1,0 +1,5 @@
+#!/bin/bash
+# Usage: addNodeToSwarm <host to add>
+
+token=$(cat joinToken)
+ssh $1 "docker swarm join --token $JOIN_TOKEN 10.128.1.28:2377"
