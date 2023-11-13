@@ -12,5 +12,5 @@ TestLoad() {
     wait $(jobs -p)
 }
 
-TestLoad 4 1000 GET
-TestLoad 4 1000 PUT
+TestLoad 4 500 GET 
+TestLoad 4 500 PUT

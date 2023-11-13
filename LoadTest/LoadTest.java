@@ -77,10 +77,10 @@ public class LoadTest {
 				.build();
 
 		Date start = new Date();
-		// client.send(request, HttpResponse.BodyHandlers.ofString());
+		client.send(request, HttpResponse.BodyHandlers.ofString());
 		Date end = new Date();
-		return Math.random() * 100;
-		// return end.getTime() - start.getTime();
+		//return Math.random() * 100;
+		return end.getTime() - start.getTime();
 	}
 
 	public static double timedGet(String uri) throws Exception {
@@ -91,9 +91,9 @@ public class LoadTest {
 				.build();
 
 		Date start = new Date();
-		// client.send(request, HttpResponse.BodyHandlers.ofString());
+		client.send(request, HttpResponse.BodyHandlers.ofString());
 		Date end = new Date();
-		return Math.random() * 100;
-		// return end.getTime() - start.getTime();
+		//return Math.random() * 100;
+		return end.getTime() - start.getTime();
 	}
 }

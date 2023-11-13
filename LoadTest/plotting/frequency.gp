@@ -3,7 +3,7 @@ method = system("echo $method")
 
 set output method . ".render.png"
 
-set title 'Latency of requests (ms)'
+set title method . ' latency of requests (ms)'
 
 set key off
 set border 3
@@ -21,6 +21,8 @@ bin_number(x) = floor(x/bin_width)
 
 set xlabel 'latency (ms)'
 set ylabel 'frequency'
+
+set logscale x 2
 
 rounded(x) = bin_width * ( bin_number(x) + 0.5 )
 
