@@ -1,4 +1,4 @@
-//package server;
+//package shortner;
 
 import java.util.List;
 import java.util.LinkedList;
@@ -45,55 +45,16 @@ public class ThreadWork {
 		}
 	}
 
-	class WriteBuffer {
-		private HashMap<String, String> buffer;
-
-		WriteBuffer() {
-			this.buffer = new HashMap<String, String>();
-		}
-
-		public synchronized int getSize() {
-			return this.buffer.size();
-		}
-
-		public int getMaxSize() {
-			return 100000;
-		}
-
-		// dump and re-initialize buffer
-		public synchronized HashMap<String, String> flush() throws InterruptedException { // called by write thread
-			/*
-			 * while (!isFull()) {
-			 * wait();
-			 * }
-			 */
-			HashMap<String, String> currBuffer = this.buffer;
-			this.buffer = new HashMap<String, String>();
-
-			return currBuffer;
-		}
-
-		public synchronized void put(String key, String value) throws InterruptedException {
-			this.buffer.put(key, value);
-
-			/*
-			 * if (isFull()) {
-			 * notifyAll(); // wake up write thread if necessary
-			 * }
-			 */
-		}
-	}
-
 	private SocketQueue queue;
 	private Cache cache;
-	private WriteBuffer buffer;
+	private WriteBuffer writeBUffer;
 	private CassandraDao dao;
 
-	public ThreadWork(RedisDao redisDao, CassandraDao cassDao) {
+	public ThreadWork(RedisDao redisDao, RedisDao bufferDao, CassandraDao cassDao) {
 		this.queue = new SocketQueue();
 		this.cache = new Cache(redisDao);
-		this.buffer = new WriteBuffer(); // TODO?
-		this.dao = cassDao; // TODO
+		this.writeBUffer = new WriteBuffer(bufferDao);
+		this.dao = cassDao;
 	}
 
 	public SocketQueue getQueue() {
@@ -105,7 +66,7 @@ public class ThreadWork {
 	}
 
 	public WriteBuffer getWriteBuffer() {
-		return this.buffer;
+		return this.writeBUffer;
 	}
 
 	public CassandraDao getUrlDao() {

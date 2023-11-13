@@ -6,11 +6,11 @@ TestLoad() {
     method=$3
 
     for connection in $(seq 1 $concurrent_connections); do
-        java LoadTest.java 127.0.0.1 8080 $connection $method $requests_per_connection "$method.$connection.out" &
+        java LoadTest.java 127.0.0.1 8000 $connection $method $requests_per_connection "$method.$connection.out" &
     done
 
     wait $(jobs -p)
 }
 
-TestLoad 4 500 GET 
-TestLoad 4 500 PUT
+TestLoad 4 400 GET 
+TestLoad 4 400 PUT

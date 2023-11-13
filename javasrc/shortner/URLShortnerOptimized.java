@@ -1,4 +1,4 @@
-//package server;
+//package shortner;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -15,9 +15,13 @@ public class URLShortnerOptimized {
 	static int NUM_THREADS; // 4
 	static String REDIS_READ_MASTER_HOSTNAME;
 	static String REDIS_READ_SLAVE_HOSTNAME;
-	static int REDIS_PORT;
+	static String REDIS_WRITE_HOSTNAME;
+	static int REDIS_READ_PORT;
+	static int REDIS_WRITE_PORT;
 	static String CASSANDRA_HOSTNAME;
 	static int CASSANDRA_PORT;
+	static String CASSANDRA_KEYSPACE;
+	static String CASSANDRA_DATACENTER;
 
 	public static void main(String[] args) {
 		try {
@@ -26,14 +30,19 @@ public class URLShortnerOptimized {
 			NUM_THREADS = Integer.parseInt(args[2]);
 			REDIS_READ_MASTER_HOSTNAME = args[3];
 			REDIS_READ_SLAVE_HOSTNAME = args[4];
-			REDIS_PORT = Integer.parseInt(args[5]);
-			CASSANDRA_HOSTNAME = args[6];
-			CASSANDRA_PORT = Integer.parseInt(args[7]);
+			REDIS_WRITE_HOSTNAME = args[5];
+			REDIS_READ_PORT = Integer.parseInt(args[6]);
+			REDIS_WRITE_PORT = Integer.parseInt(args[7]);
+			CASSANDRA_HOSTNAME = args[8];
+			CASSANDRA_PORT = Integer.parseInt(args[9]);
+			CASSANDRA_KEYSPACE = args[10];
+			CASSANDRA_DATACENTER = args[11];
 
-			RedisDao redisDao = new RedisDao(REDIS_READ_MASTER_HOSTNAME, REDIS_READ_SLAVE_HOSTNAME, REDIS_PORT);
-			CassandraDao cassDao = new CassandraDao(CASSANDRA_HOSTNAME, CASSANDRA_PORT);
+			RedisDao cacheDao = new RedisDao(REDIS_READ_MASTER_HOSTNAME, REDIS_READ_SLAVE_HOSTNAME, REDIS_READ_PORT);
+			RedisDao writeBufferDao = new RedisDao(REDIS_WRITE_HOSTNAME, REDIS_WRITE_PORT);
+			CassandraDao databaseDao = new CassandraDao(CASSANDRA_HOSTNAME, CASSANDRA_PORT, CASSANDRA_KEYSPACE, CASSANDRA_DATACENTER);
 
-			ThreadWork work = new ThreadWork(redisDao, cassDao);
+			ThreadWork work = new ThreadWork(cacheDao, writeBufferDao, databaseDao);
 
 			// start up worker threads to handle general URL shortening functionality
 			Thread[] worker = new Thread[NUM_THREADS];

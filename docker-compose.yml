@@ -1,10 +1,10 @@
-version: "3"
+version: "3.4"
 services:
   read-cache-master:
     hostname: read-cache-master
     image: 10.128.1.28:5000/redis:latest
     build: redis
-    ports: 
+    ports:
       - "6379:6379"
     deploy:
       replicas: 1
@@ -17,19 +17,19 @@ services:
       - "/home/student/redis-data:/data"
     networks:
       - read-cache-net
-      # - webnet
-    # healthcheck:
-    #   test: ["CMD", "redis-cli", "ping"]
-    #   start_period: 20s
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-  
+      - webnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   read-cache-slave:
     hostname: read-cache-slave
     image: 10.128.1.28:5000/redis:latest
     build: redis
-    ports: 
+    ports:
       - "6380:6379"
     deploy:
       replicas: 3
@@ -40,13 +40,13 @@ services:
           - "node.role != manager"
     networks:
       - read-cache-net
-      # - webnet
-    # healthcheck:
-    #   test: ["CMD", "redis-cli", "ping"]
-    #   start_period: 20s
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+      - webnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
     command: redis-server --slaveof read-cache-master 6379
     depends_on:
       - read-cache-master
@@ -63,17 +63,25 @@ services:
         condition: on-failure
     networks:
       - write-queue-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   write-queue-flush:
     hostname: write-queue-flush
     image: 10.128.1.28:5000/write-queue-flush:latest
-    build: 
+    depends_on:
+      - write-queue
+    build:
       context: javasrc
       dockerfile: write-queue-flush/Dockerfile
     deploy:
       replicas: 4
       restart_policy:
-          condition: on-failure
+        condition: on-failure
     ports:
       - "8100:8000"
     networks:
@@ -81,7 +89,7 @@ services:
 
   url-shortner:
     image: 10.128.1.28:5000/shortner:latest
-    build: 
+    build:
       context: javasrc
       dockerfile: shortner/Dockerfile
     deploy:
@@ -95,27 +103,30 @@ services:
     networks:
       - read-cache-net
       - write-queue-net
-      # - webnet
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://localhost:8000"]
-    #   start_period: 20s
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
+      - webnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      start_period: 20s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - write-queue
+      - read-cache-slave
 
-  # visualizer:
-  #   image: dockersamples/visualizer:stable
-  #   ports:
-  #     - "8080:8080"
-  #   volumes:
-  #     - "/var/run/docker.sock:/var/run/docker.sock"
-  #   deploy:
-  #     placement:
-  #       constraints: [node.role == manager]
-  #   networks:
-  #     - webnet
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - webnet
 
 networks:
   read-cache-net:
   write-queue-net:
-  # webnet:
+  webnet:

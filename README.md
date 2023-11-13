@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [Architecture](#architecture)
-  - [System Design](#system-design)
+  - [System Components](#system-components)
 - [Running The System](#running-the-system)
   - [Initial Setup](#initial-setup)
   - [Configuration](#configuration)
@@ -68,17 +68,16 @@ classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
 
 The following mermaid diagram architecturally describes the system, view in a markdown viewer that supports mermaid diagrams such as GitHub.
 
-### System Design
+### System Components
 
-- **URL Shortener**: The URL shortener is the main service of the system. It handles incoming requests concurrently and is responsible for handling read and write requests by checking the Redis read cache along with the Cassandra database and writing to the Redis write queue respectively. It will also write system logs and persist logs to disk.
+- **URL Shortener**: The URL shortener is the main service of the system. It is a multithreaded server that handles user requests. Read requests are checked for in the Redis cache. On a cache miss, the server checks the Cassandra database instead. Write requests are sent to a Redis write queue, where a separate writer application persists the requests to Cassandra. It will also write system logs and persist logs to disk.
 
-- **Caching**: Docker and Redis are used for caching. A Docker Redis image is customized for the application and is one of the services in the swarm, acting as a read cache. The Redis service includes a single primary with persistence and multiple replicas without persistence. Data eviction is implemented to ensure Redis doesn't break under extreme load. The URL shortener server checks the Redis read cache for read requests. The read cache is updated both when the server receives a write request and on a cache miss for a read request (if the server retrieves data from Cassandra for a read request).
+- **Read Cache**: Docker and Redis are used for caching. A Docker Redis image is customized for the application and is one of the services in the swarm, acting as a read cache. The Redis service includes a single primary with persistence and multiple replicas without persistence. Data eviction is implemented to ensure Redis doesn't break under extreme load. The URL shortener server checks the Redis read cache for read requests. The read cache is updated both when the server receives a write request and on a cache miss for a read request (if the server retrieves data from Cassandra for a read request).
 
-- **Data**: The Cassandra service is used for persisting data. The Cassandra service includes a single primary with along with multiple child nodes. Data is partitioned and replicated across the Cassandra nodes. The Cassandra nodes are deployed outside the swarm and each node saves the data to a volume external to the container for persistence.
+- **Write Buffer**: Docker, Redis and Java are used to implement a write queue. When the URL server receives a write request, the request is sent to a Redis write queue. The URL server then immediately returns an OK response to the client. A writer application then retrieves URL keys from the write queue and persists them to Cassandra.
 
-- **Health Check**: A health check is implemented for the request handlers to ensure they are functioning correctly, configured in the Docker compose file. Monitoring for the service is done with docker visualizer, a service that provides a web interface for viewing the status of the swarm. As cassandra nodes are deployed outside the swarm, a separate monitoring service is implemented to monitor the health of the Cassandra nodes.
-
-- **Request Handlers**: The application uses Docker and Java for handling requests. A Java server handles incoming requests. Read requests are checked for in the Redis cache. On a cache miss, the server checks the Cassandra database instead. Write requests are sent to a Redis write queue, where a separate writer application persists the requests to Cassandra.
+- **Data**: The Cassandra service is used for persisting data. The Cassandra service includes a single primary with along with multiple child nodes. Data is partitioned and replicated across the Cassandra nodes. The Cassandra nodes are deployed outside the swarm.\
+  Data within containers is persisted using Docker volumes, which are connected to the host machine. Data persisted includes: Cassandra database, Redis cache, server logs.
 
 ## Running The System
 
@@ -86,7 +85,7 @@ The following mermaid diagram architecturally describes the system, view in a ma
 
 > OPTIONAL: For convenience, [passwordless ssh](http://www.linuxproblem.org/art_9.html) can be setup between hosts on the VMs.
 
-Run the `createRequiredFolders.sh` script in the scripts directory to create the required folders for the system.
+Run the `createRequiredFolders.sh` script in the `scripts` directory to create the required folders for the system.
 
 ### Configuration
 
@@ -124,9 +123,10 @@ Redis uses the /redis/redis.conf file for configuration.
 ### System Startup
 
 To startup the service, we can use the `make` command. This will setup the swarm, build the images, and
-deploy the stack.
+deploy the stack. Run `make setup-db` to start the cassandra nodes.
 
 ```bash
+make setup-db
 make
 ```
 
@@ -138,6 +138,8 @@ To shutdown the service, we can use the `make kill` command. This will shutdown 
 make kill
 make kill-db
 ```
+
+If we want to remove all unused Docker objects and restart the Docker service, we can use the `make clean` command.
 
 ### Scaling Up
 
@@ -191,19 +193,25 @@ The application is designed to be scalable and resilient, with multiple componen
 
 - **Persistence**: The application uses Docker and Cassandra for persistence. Multiple Cassandra nodes are deployed across servers, with a configurable replication factor of 2. The Cassandra nodes are deployed outside the swarm and each node saves data to a volume external to the container for persistence. Similarly, the Redis data and service logs are saved in docker volumes for persistence.
 
-- **Scalability**: The system can be scaled horizontally through Docker and Cassandra a new node can be added to the Cassandra cluster by creating a new Docker container with a Cassandra image and connecting it to the master Cassandra node. Cassandra's gossip based protocol easily allows new nodes to be integrated with existing ones. A physical host can be added to the entire system by adding it to the swarm. New Cassandra nodes and new physical hosts are then considered by the various Cassandra and Docker services during their various operations.\
+- **Scalability**: The system can be scaled horizontally through Docker and Cassandra. A new node can be added to the Cassandra cluster by creating a new Docker container with a Cassandra image and connecting it to the master Cassandra node. Cassandra's gossip based protocol easily allows new nodes to be integrated with existing ones. A physical host can be added to the entire system by adding it to the swarm. New Cassandra nodes and new physical hosts are then considered by the various Cassandra and Docker services during their various operations.\
   The system can be scaled vertically through various configurations. The amount of memory used by the Redis read cache can be adjusted through configuration files, as well as the frequency of persistence. The number of threads used by the URL servers can be adjusted in the Dockerfile. These configurations allow the system to make better use of host resources if they are increased.
 
 - **Improving Performance**: To improve performance, the server returns a response for a request immediately after each write. Writes are added to a Redis write queue and are persisted into Cassandra by a writer application. The writer application runs independently from Redis, Cassandra, and the web services.
 
+- **Health Check**: A health check is implemented for the request handlers to ensure they are functioning correctly, configured in the Docker compose file.
+
+- **Monitoring**: Monitoring for the service is done with docker visualizer, a service that provides a web interface for viewing the status of the swarm. As cassandra nodes are deployed outside the swarm, a separate monitoring service is implemented to monitor the health of the Cassandra nodes.
+
 - **Durability**: On the first host failure, no data will be lost as all of its data is partitioned around the Cassandra system. On a second host failure, minimal data will be lost since the data is partitioned and replicated within the replicas.\
   The Redis caches make use of append-only file (AoF) to persist data. This results in higher durability as this configures Redis to log all operations, which allows data to be reconstructed based on the persisted logs. The tradeoff is a slowdown in performance.
 
-- **Recovery**: If the connection between a slave Redis read cache and the master Redis read cache is severed, the slave can later as for a re-sync.
+- **Recovery**: Docker's swarm automatically handles recovery if a container goes down. Recovery will be hindered if the manager node goes down, however.\
+  If the connection between a slave Redis read cache and the master Redis read cache is severed, the slave can later as for a re-sync.
 
 - **Availability**: The system has high availability due to use of various replicas in the system, as well as Cassandra (which is inherently highly available). The use of master and slave Redis read caches prevents downtime from a single read cache (excluding the master) from affecting the rest of the system. The use of replicas in Cassandra allow a different node to be utilized if a node goes down, preventing a single failure from affecting the availability of the system.
 
-- **Consistency**: Cassandra's use of eventual consistency guarantees that data across all nodes will eventually become consistent.
+- **Consistency**: Cassandra's use of eventual consistency guarantees that data across all nodes will eventually become consistent.\
+  The consistency level can be adjusted as needed. The application currently has a consistency level of ONE, as consistency is not critical the URL service. Having a low consistency level allows slightly boosts performance.
 
 ### System Strengths
 
@@ -226,16 +234,15 @@ For performance testing, we use the performance testers used for A1 [here](https
 ```bash
 cd LoadTest
 ./RunLoadTest.bash
+cd plotting
+./runPlot GET
+./runPlot PUT
 ```
 
 #### Read Test
 
 ![Read Test Results](LoadTest/plotting/GET.render.png)
 
-TODO Talk about results
-
 #### Write Test
 
 ![Write Test Results](LoadTest/plotting/PUT.render.png)
-
-TODO Talk about results

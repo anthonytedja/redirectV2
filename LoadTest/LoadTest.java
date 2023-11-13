@@ -42,6 +42,10 @@ public class LoadTest {
 			FileWriter writer = new FileWriter(outputFileName);
 
 			for (int i = 0; i < numRequests; i++) {
+				if (i % 100 == 0) {
+					System.out.println(i);
+				}
+				
 				String longURL = "http://" + randomString(100);
 				String shortURL = randomString(20);
 				if (requestType.equals("PUT")) {

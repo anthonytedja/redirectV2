@@ -1,4 +1,4 @@
-//package server;
+//package shortner;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -52,14 +52,14 @@ class URLShortnerWorker implements Runnable {
 				newConn = work.getQueue().dequeue();
 				handle(newConn);
 			} catch (Exception e) {
-				System.out.println(e);
+				System.out.println(new Date() + ": " + e);
 			} finally {
 				try {
                     if (newConn != null) {
 						newConn.close();
 					}
                 } catch (IOException e) {
-                    System.err.println(e);
+                    System.err.println(new Date() + ": " + e);
                 }
 			}
 		}
@@ -105,7 +105,7 @@ class URLShortnerWorker implements Runnable {
 
 			handleDefault(connect, in);
 		} catch (Exception e) {
-			System.err.println(e);
+			System.err.println(new Date() + ": " + e);
 		} finally {
 			try {
 				if (in != null) {
@@ -113,7 +113,7 @@ class URLShortnerWorker implements Runnable {
 				}	
 				connect.close(); // we close socket connection
 			} catch (Exception e) {
-				System.err.println("Error closing stream : " + e.getMessage());
+				System.err.println(new Date() + ": Error closing stream : " + e.getMessage());
 			}
 
 			if (VERBOSE) {
@@ -164,7 +164,7 @@ class URLShortnerWorker implements Runnable {
 			dataOut.write(fileData, 0, fileLength);
 			dataOut.flush();
 		} catch (Exception e) {
-			System.err.println(e);
+			System.err.println(new Date() + ": " + e);
 		} finally {
 			try {
 				if (out != null) {
@@ -174,7 +174,7 @@ class URLShortnerWorker implements Runnable {
 					dataOut.close();
 				}
 			} catch (Exception e) {
-				System.err.println("Error closing stream : " + e.getMessage());
+				System.err.println(new Date() + ": Error closing stream : " + e.getMessage());
 			}
 		}
 	}
@@ -186,16 +186,15 @@ class URLShortnerWorker implements Runnable {
 			out = new PrintWriter(connect.getOutputStream());
 			dataOut = new BufferedOutputStream(connect.getOutputStream());
 
-			String longResource = null;
-			if (isCacheEnabled) {
-				longResource = this.work.getCache().get(shortResource); // check in cache first
-				if (longResource == null) {
-					longResource = this.work.getUrlDao().get(shortResource);
-					this.work.getCache().set(shortResource, longResource);
-				}
-			} else {
+			String longResource = this.work.getCache().get(shortResource); // check in cache first
+			if (longResource == null) {
+				System.out.println("CACHE MISS");
 				longResource = this.work.getUrlDao().get(shortResource);
+				this.work.getCache().set(shortResource, longResource);
+			} else {
+				System.out.println("CACHE HIT");
 			}
+			
 
 			if (longResource != null) { // case 1: URL exists - display success page
 				File file = new File(WEB_ROOT, REDIRECT);
@@ -236,7 +235,7 @@ class URLShortnerWorker implements Runnable {
 				dataOut.flush();
 			}
 		} catch (Exception e) {
-			System.err.println(e);
+			System.err.println(new Date() + ": " + e);
 		} finally {
 			try {
 				if (out != null) {
@@ -246,7 +245,7 @@ class URLShortnerWorker implements Runnable {
 					dataOut.close();
 				}
 			} catch (Exception e) {
-				System.err.println("Error closing stream : " + e.getMessage());
+				System.err.println(new Date() + ": Error closing stream : " + e.getMessage());
 			}
 		}
     }
@@ -258,15 +257,9 @@ class URLShortnerWorker implements Runnable {
 			out = new PrintWriter(connect.getOutputStream());
 			dataOut = new BufferedOutputStream(connect.getOutputStream());
 
-			if (isWriteBufferEnabled) {
-				this.work.getWriteBuffer().put(shortResource, longResource); // buffer automatically flushes
-			} else {
-				this.work.getUrlDao().set(shortResource, longResource);
-			}
-
-			if (isCacheEnabled) {
-				this.work.getCache().set(shortResource, longResource);
-			}
+			//this.work.getUrlDao().set(shortResource, longResource); // TODO: contact redis write queue instead
+			this.work.getWriteBuffer().set(shortResource, longResource);
+			this.work.getCache().set(shortResource, longResource);
 
 			File file = new File(WEB_ROOT, REDIRECT_RECORDED);
 			int fileLength = (int) file.length();
@@ -286,7 +279,7 @@ class URLShortnerWorker implements Runnable {
 			dataOut.write(fileData, 0, fileLength);
 			dataOut.flush();
 		} catch (Exception e) {
-			System.err.println(e);
+			System.err.println(new Date() + ": " + e);
 		} finally {
 			try {
 				if (out != null) {
@@ -296,7 +289,7 @@ class URLShortnerWorker implements Runnable {
 					dataOut.close();
 				}
 			} catch (Exception e) {
-				System.err.println("Error closing stream : " + e.getMessage());
+				System.err.println(new Date() + ": Error closing stream : " + e.getMessage());
 			}
 		}
 	}
@@ -327,7 +320,7 @@ class URLShortnerWorker implements Runnable {
 			dataOut.write(fileData, 0, fileLength);
 			dataOut.flush();
 		} catch (Exception e) {
-			System.err.println(e);
+			System.err.println(new Date() + ": " + e);
 		} finally {
 			try {
 				if (out != null) {
@@ -337,7 +330,7 @@ class URLShortnerWorker implements Runnable {
 					dataOut.close();
 				}
 			} catch (Exception e) {
-				System.err.println("Error closing stream : " + e.getMessage());
+				System.err.println(new Date() + ": Error closing stream : " + e.getMessage());
 			}
 		}
     }

@@ -3,18 +3,14 @@
 import common.RedisDao;
 import common.KeyValuePair;
 
-public class Cache {
+public class WriteBuffer {
 	private RedisDao dao;
 
-	public Cache(RedisDao dao) {
+	public WriteBuffer(RedisDao dao) {
 		this.dao = dao;
 	}
 
-	public String get(String key) {
-		return this.dao.get(key);
-	}
-
 	public void set(String key, String value) {
-		this.dao.set(new KeyValuePair(key, value));
+		this.dao.push(new KeyValuePair(key, value));
 	}
 }
