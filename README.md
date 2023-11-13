@@ -120,6 +120,10 @@ Redis uses the /redis/redis.conf file for configuration.
 - `REPLICATION_FACTOR`: Default 2, the replication factor for cassandra can be configured in the /cassandra/startCluster script.
 - `hosts`: Default 3, the number of nodes for startup can be configured in the /cassandra/hosts file.
 
+#### System
+
+Configuration to control the various services in the system can be adjusted in the docker-compose.yml file. This allows the user to control attributes such as the number of containers per service, the port exposed on the host and much more.
+
 ### System Startup
 
 To startup the service, we can use the `make` command. This will setup the swarm, build the images, and
@@ -143,7 +147,13 @@ If we want to remove all unused Docker objects and restart the Docker service, w
 
 ### Scaling Up
 
-If we want to add a node to the cassandra cluster while its running, we can run the following command to add a node with the specified host ip:
+To add a new physical host to the system, call the following script:
+
+```bash
+./addNodeToSwarm {host ip}
+```
+
+If we want to add a node to the Cassandra cluster while its running, we can run the following command to add a node with the specified host ip:
 
 ```bash
 ./cassandra/addNode {host ip}
@@ -151,7 +161,13 @@ If we want to add a node to the cassandra cluster while its running, we can run 
 
 ### Scaling Down
 
-If we want to remove a node from the cassandra cluster while its running, we can run the following command to remove a node with the specified host ip:
+To remove a physical host to the system, call the following script:
+
+```bash
+./removeNodeFromSwarm {host ip}
+```
+
+If we want to remove a node from the Cassandra cluster while its running, we can run the following command to remove a node with the specified host ip:
 
 ```bash
 ./cassandra/removeNode {host ip}
@@ -191,6 +207,10 @@ The application is designed to be scalable and resilient, with multiple componen
 
 - **Load Balancing**: Docker is used to load balance the system. The ingress networking mesh allows requests to be evenly distributed across the participants of the swarm. The round robin strategy is used by default.
 
+- **Orchestration**: Orchestration is primarily handled through Docker. A Makefile maps all the commands required to start the system to easy-to-call targets. New nodes can be added through scripts mentioned above.\
+Cassandra orchestration is also done through Docker. Containers are started outside the swarm using the docker run command. New Cassandra nodes can be added through scripts mentioned above.\
+The docker-compose.yml file contains the configurations necessary to control the services within the Docker swarm. Attributes such as the number of containers to deploy can be modified here. The stack can then be redeployed to push the changes.
+
 - **Persistence**: The application uses Docker and Cassandra for persistence. Multiple Cassandra nodes are deployed across servers, with a configurable replication factor of 2. The Cassandra nodes are deployed outside the swarm and each node saves data to a volume external to the container for persistence. Similarly, the Redis data and service logs are saved in docker volumes for persistence.
 
 - **Scalability**: The system can be scaled horizontally through Docker and Cassandra. A new node can be added to the Cassandra cluster by creating a new Docker container with a Cassandra image and connecting it to the master Cassandra node. Cassandra's gossip based protocol easily allows new nodes to be integrated with existing ones. A physical host can be added to the entire system by adding it to the swarm. New Cassandra nodes and new physical hosts are then considered by the various Cassandra and Docker services during their various operations.\
@@ -221,7 +241,9 @@ The system is designed to be scalable and resilient, through the use of Docker, 
 
 One of the system's weaknesses is consistency. In order to achieve high availability, Cassandra utilizes eventual consistency. Cassandra avoids immediate updates. Instead, the data across different nodes is eventually made consistent. This prevents delays during updates and allows Cassandra to respond immediately to client requests. This can be adjusted, however, if the system requires more consistency. The consistency level can adjusted accordingly to the system's needs.
 
-Logging could be better handled. Logs can be difficult to retrieve from the system when various components fail.
+Docker's load balancing is limited in functionality. Using a dedicated load balancer such as nginx allows for more flexibility. Different load balancing techniques and configurations could be used to better match the system.
+
+Logging could be better handled. Logs can be difficult to retrieve from the system when various components fail. Other mechanisms such as log rotation could also be used to better utilize the host system's disk space.
 
 Components of the system could be better modularized. A pipeline could be setup between the various components to separate responsibilities. The logging of the system would be a good example to improve, by having the URL server send log statements to a dedicated logger container instead of handling logging itself.
 
