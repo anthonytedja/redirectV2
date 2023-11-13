@@ -257,7 +257,6 @@ class URLShortnerWorker implements Runnable {
 			out = new PrintWriter(connect.getOutputStream());
 			dataOut = new BufferedOutputStream(connect.getOutputStream());
 
-			//this.work.getUrlDao().set(shortResource, longResource); // TODO: contact redis write queue instead
 			this.work.getWriteBuffer().set(shortResource, longResource);
 			this.work.getCache().set(shortResource, longResource);
 
