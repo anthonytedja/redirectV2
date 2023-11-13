@@ -53,7 +53,9 @@ public class RedisDao {
 
 	public KeyValuePair blockPop() {
 		// timeout = 0; wait forever
+		System.out.println("Waiting to pop from queue");
 		List<String> result = this.jedis.brpop(0, "writequeuelist");
-		return KeyValuePair.fromString(result.get(0));
+		System.out.println("popped from writequeuelist:" + String.join(",", result));
+		return KeyValuePair.fromString(result.get(1));
 	}
 }
