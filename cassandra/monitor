@@ -1,0 +1,23 @@
+#!/bin/bash
+# Monitor Cassandra cluster
+
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+normal=$(tput sgr0)
+NODE_NAME="cassandra-node"
+
+while true; do
+    echo "--------------------------------------------------------------------------------"
+    for host in $(cat ./cassandra/hosts); do
+        STATUS=$(ssh $host "docker exec $NODE_NAME nodetool status | grep -e $host")
+        STATUSUN=$(echo $STATUS | grep -e "UN")
+        
+        if [[ -z "$STATUSUN" ]]; then
+            echo "(${red}x${normal}) $host : $STATUS"
+            ssh $host "docker start $NODE_NAME"
+        else
+            echo "(${green}o${normal}) $host : $STATUS"
+        fi
+    done;
+    sleep 5
+done

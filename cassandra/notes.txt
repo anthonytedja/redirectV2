@@ -1,4 +1,17 @@
-./cassandra/startCluster 10.128.1.28 10.128.2.28 10.128.3.28
-./cassandra/stopCluster 10.128.1.28 10.128.2.28 10.128.3.28
-./cassandra/addNode 10.128.1.28 10.128.4.28
+./cassandra/startCluster
+./cassandra/stopCluster
+./cassandra/addNode 10.128.4.28
 ./cassandra/removeNode 10.128.4.28
+
+# docker exec -it cassandra-node bash -c "nodetool status"
+
+# docker exec cassandra-node cqlsh -e "DESCRIBE KEYSPACES;"
+# docker exec -it cassandra-node cqlsh
+
+# Example commands
+
+# USE url_shortener;
+# INSERT INTO urls (short_code, url_original) VALUES ('abc', 'https://www.google.com');
+# SELECT * FROM urls WHERE short_code = 'abc' ALLOW FILTERING;
+# SELECT * FROM urls WHERE short_code = 'abc';
+# SELECT * FROM url_shortener.urls;

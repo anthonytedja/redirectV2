@@ -11,5 +11,7 @@ NODE_NAME="cassandra-node"
 
 ssh student@$NODE_IP "docker container stop $NODE_NAME; docker container rm $NODE_NAME"
 
+sed -i "/$NODE_IP/d" ./cassandra/hosts
+
 echo "Node removed from the cluster."
 docker exec -it cassandra-node bash -c "nodetool status"
