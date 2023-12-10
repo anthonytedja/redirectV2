@@ -1,6 +1,6 @@
-# CSC409 A2 - URL Shortener
+# Redirect V2
 
-> A lightweight scalable URL Shortener system
+> A lightweight scalable URL Shortener system with Docker, Redis, and Cassandra.
 
 ## Table of Contents
 
@@ -208,8 +208,8 @@ The application is designed to be scalable and resilient, with multiple componen
 - **Load Balancing**: Docker is used to load balance the system. The ingress networking mesh allows requests to be evenly distributed across the participants of the swarm. The round robin strategy is used by default.
 
 - **Orchestration**: Orchestration is primarily handled through Docker. A Makefile maps all the commands required to start the system to easy-to-call targets. New nodes can be added through scripts mentioned above.\
-Cassandra orchestration is also done through Docker. Containers are started outside the swarm using the docker run command. New Cassandra nodes can be added through scripts mentioned above.\
-The docker-compose.yml file contains the configurations necessary to control the services within the Docker swarm. Attributes such as the number of containers to deploy can be modified here. The stack can then be redeployed to push the changes.
+  Cassandra orchestration is also done through Docker. Containers are started outside the swarm using the docker run command. New Cassandra nodes can be added through scripts mentioned above.\
+  The docker-compose.yml file contains the configurations necessary to control the services within the Docker swarm. Attributes such as the number of containers to deploy can be modified here. The stack can then be redeployed to push the changes.
 
 - **Persistence**: The application uses Docker and Cassandra for persistence. Multiple Cassandra nodes are deployed across servers, with a configurable replication factor of 2. The Cassandra nodes are deployed outside the swarm and each node saves data to a volume external to the container for persistence. Similarly, the Redis data and service logs are saved in docker volumes for persistence.
 
